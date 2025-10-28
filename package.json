@@ -22,7 +22,10 @@
     "dependencies": {
         "@vitejs/plugin-react": "^5.0.4",
         "bootstrap": "^5.3.8",
+        "clsx": "^2.1.1",
+        "formik": "^2.4.6",
         "react-bootstrap": "^2.10.10",
-        "sweetalert2": "^11.26.3"
+        "sweetalert2": "^11.26.3",
+        "yup": "^1.7.1"
     }
 }

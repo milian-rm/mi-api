@@ -1,51 +1,72 @@
-import React, {useEffect, useState} from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import "../../css/lista.css"
 import Button from 'react-bootstrap/Button';
-import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from "sweetalert2";
 import Person from "../../css/person.png"
+import BootstrapForm from 'react-bootstrap/Form';
+import { Formik, Form as FormikForm, Field, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
 
 
-function agregarRegistro(){
-    const [datosVacios, setDatosVacios] = useState(false);
-    const [show, setShow] = useState(false);
+const RegistroSchema = Yup.object().shape({
+  nombre: Yup.string().required("El Nombre es Requerido"),
+  apellido: Yup.string().required("El Apellido es Requerido"),
+  noDpi: Yup.string().required("El No. DPI es Requerido"),
+  cargo: Yup.string().required("El Cargo es Requerido"),
+});
 
-    const handleShow = () => setShow(true);
-    const refreshPage = () => {
-        window.location.reload();
-    };
-    const handleCloseRefresh = () => {
-        setShow(false);
-        if(!datosVacios){
-            refreshPage();
-        }
-    }
-    const handleClose = () => {
-        setShow(false);
-    }
 
-    const [nombre, setNombre] = useState('');
-    const [apellido, setApellido] = useState('');
-    const [noDpi, setNoDpi] = useState('');
-    const [cargo, setCargo] = useState('');
+function AgregarRegistro() {
+  const [show, setShow] = useState(false);
 
-    const handleNombreChange = (event) => {
-        setNombre(event.target.value);
-    };
-    const handleApellidoChange = (event) => {
-        setApellido(event.target.value);
-    };
-    const handleNoDpiChange = (event) => {
-        setNoDpi(event.target.value);
-    };
-    const handleCargoChange = (event) => {
-        setCargo(event.target.value);
-    };
+  const handleShow = () => setShow(true);
+  const refreshPage = () => {
+    window.location.reload();
+  };
 
-     return (
+  const handleCloseRefresh = () => {
+    setShow(false);
+    refreshPage();
+  }
+
+  const handleClose = () => {
+    setShow(false);
+  }
+
+  const agregarDatos = (values, { setSubmitting, resetForm }) => {
+    const datos = values;
+
+    axios.post('/api/empleados', datos)
+      .then(() => {
+        Swal.fire({
+          title: "¡Registro Agregado!",
+          text: "El nuevo empleado ha sido guardado exitosamente.",
+          icon: "success",
+          draggable: true
+        }).then(() => {
+          handleCloseRefresh();
+          resetForm();
+        });
+      })
+      .catch(error => {
+        console.error("ERROR al agregar registro: ", error.response ? error.response.data : error.message);
+        Swal.fire({
+          title: "Error al Guardar",
+          text: "No se pudo agregar el registro. Inténtalo de nuevo.",
+          icon: "error",
+          timer: 5000
+        });
+      })
+      .finally(() => {
+        setSubmitting(false);
+      });
+  }
+
+
+  return (
     <>
       <button variant="primary" onClick={handleShow} className="button-agregar">
         <h3>Agregar Empleado</h3>
@@ -54,87 +75,76 @@ function agregarRegistro(){
 
       <Modal show={show} onHide={handleClose}>
         <Modal.Header closeButton>
-          <Modal.Title>Agregar Registro</Modal.Title>
+          <Modal.Title>Agregar Empleado</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-              <Form.Label>Nombre</Form.Label>
-              <Form.Control
-                autoFocus
-                type="text"
-                value={nombre}
-                onChange={handleNombreChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3" controlId="exampleForm.ControlInput2">
-              <Form.Label>Apellido</Form.Label>
-              <Form.Control
-                type="text"
-                value={apellido}
-                onChange={handleApellidoChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3" controlId="exampleForm.ControlInput3">
-              <Form.Label>noDpi</Form.Label>
-              <Form.Control
-                type="text"
-                value={noDpi}
-                onChange={handleNoDpiChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3" controlId="exampleForm.ControlInput4">
-              <Form.Label>Cargo</Form.Label>
-              <Form.Control
-                type="text"
-                value={cargo}
-                onChange={handleCargoChange}
-              />
-            </Form.Group>        
-          </Form>
+          <Formik
+            initialValues={{ nombre: '', apellido: '', noDpi: '', cargo: '' }}
+            validationSchema={RegistroSchema}
+            onSubmit={agregarDatos}
+            enableReinitialize={false}
+          >
+            {({ isSubmitting }) => (
+              <FormikForm>
+                <BootstrapForm.Group className="mb-3">
+                  <BootstrapForm.Label htmlFor="nombre">Nombre</BootstrapForm.Label>
+                  <Field
+                    type="text"
+                    name="nombre"
+                    as={BootstrapForm.Control}
+                    placeholder="Ingrese el Nombre"
+                  />
+                  <ErrorMessage name="nombre" component="div" className="text-danger small" />
+                </BootstrapForm.Group>
+
+                <BootstrapForm.Group className="mb-3">
+                  <BootstrapForm.Label htmlFor="apellido">Apellido</BootstrapForm.Label>
+                  <Field
+                    type="text"
+                    name="apellido"
+                    as={BootstrapForm.Control}
+                    placeholder="Ingrese el Apellido"
+                  />
+                  <ErrorMessage name="apellido" component="div" className="text-danger small" />
+                </BootstrapForm.Group>
+
+                <BootstrapForm.Group className="mb-3">
+                  <BootstrapForm.Label htmlFor="noDpi">No. DPI</BootstrapForm.Label>
+                  <Field
+                    type="text"
+                    name="noDpi"
+                    as={BootstrapForm.Control}
+                    placeholder="Ingrese el No. DPI"
+                  />
+                  <ErrorMessage name="noDpi" component="div" className="text-danger small" />
+                </BootstrapForm.Group>
+
+                <BootstrapForm.Group className="mb-3">
+                  <BootstrapForm.Label htmlFor="cargo">Cargo</BootstrapForm.Label>
+                  <Field
+                    type="text"
+                    name="cargo"
+                    as={BootstrapForm.Control}
+                    placeholder="Ingrese el Cargo"
+                  />
+                  <ErrorMessage name="cargo" component="div" className="text-danger small" />
+                </BootstrapForm.Group>
+
+                <Modal.Footer>
+                  <Button variant="secondary" onClick={handleClose}>
+                    Cerrar
+                  </Button>
+                  <Button variant="primary" type="submit" disabled={isSubmitting}>
+                    Guardar Registro
+                  </Button>
+                </Modal.Footer>
+              </FormikForm>
+            )}
+          </Formik>
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={()=>{agregarDatos(nombre, apellido, noDpi, cargo);}}>
-            Save Changes
-          </Button>
-        </Modal.Footer>
       </Modal>
     </>
   );
-
-  function agregarDatos(name, lastname, dpi, workstation){
-        const datos = {
-                nombre : name,
-                apellido : lastname,
-                noDpi : dpi,
-                cargo : workstation            
-            }
-
-        if(datos != null){
-            axios.post('/api/empleados', datos)
-                .then(
-                    Swal.fire({
-                        title: "Se Agregó su Registro",
-                        icon: "success",
-                        draggable: true
-                    }).then((draggable)=>
-                        handleCloseRefresh()
-                    )
-                )    
-                .catch(error => {
-                    console.log("ERROR: ",error.response.data);
-                    });   
-        }    
-
-    }
 }
 
-
-
-
-
-
-export default agregarRegistro;
+export default AgregarRegistro;
